@@ -22,23 +22,23 @@ def SpanFromSeq(eseq):
     return [Sset, Scon]
 
 def GetCanonicalCut(n, b):
-    print("GetCanonicalCut n=" + str(n) + " b=" + str(b))
+#    print("GetCanonicalCut n=" + str(n) + " b=" + str(b))
     q = math.floor(n / b)
     r = n - q * b
-    print("    r=", r)
+#    print("    r=", r)
     r_crit = math.ceil( b / 2 )
-    print("    r_crit=", r_crit)
+#    print("    r_crit=", r_crit)
     if r <= r_crit:
         b1 = math.floor( (b + r) / 2 )
         bqp1 = math.ceil( (b+r) / 2 )
         eseq = [b1] + (q-1) * [b] + [bqp1]
-        print("    1 : eseq=" + str(eseq))
+#        print("    1 : eseq=" + str(eseq))
         return SpanFromSeq(eseq)
     else:
         b1 = r - math.floor( b / 2 )
         bqp2 = math.floor( b / 2 )
         eseq = [b1] + q * [b] + [bqp2]
-        print("    2 : eseq=" + str(eseq))
+#        print("    2 : eseq=" + str(eseq))
         return SpanFromSeq(eseq)
 
 
@@ -86,19 +86,46 @@ def get_canonical_best(G):
     return [b_best, max_val]
 
 
+def RemoveFileIfExist(efile):
+    if os.path.exists(efile):
+        os.remove(efile)
 
-def Compute_MaxCut_Gurobi(G):
-    import gurobipy as gb
-    p = gb.Model()
-    p.setParam('Threads', 1)
 
-    vdict = {}
-    for n in G.nodes:
-        vdict[n] = p.addVar(name='v_'+str(n), vtype=gb.GRB.BINARY)
-    C_i = [vdict[i] + vdict[j] - 2*vdict[i]*vdict[j] for i, j in G.edges]
-    p.setObjective(sum(C_i), gb.GRB.MAXIMIZE)
-    p.optimize()
-    return [int(vdict[n].x) for n in G.nodes]
+def Compute_MaxCut_MaxSat(G):
+    n_node = len(G.nodes)
+    n_edge = len(G.edges)
+    n_cond = 2 * n_edge
+    #
+    FileInput = "/tmp/evalmaxsat_input"
+    fI = open(FileInput, "w")
+    fI.write("p wcnf " + str(n_node) + " " + str(n_cond) + " 15\n")
+    for i, j in G.edges:
+        iP = i + 1
+        jP = j + 1
+        fI.write("1 " + str(iP) + " " + str(jP) + " 0\n")
+        fI.write("1 " + str(-iP) + " " + str(-jP) + " 0\n")
+    fI.close()
+    #
+    FileOut = "/tmp/evalmaxsat_out"
+    eProg = "EvalMaxSAT_bin"
+    eCommand = eProg + " " + FileInput + " > " + FileOut
+    os.system(eCommand)
+    #
+    x_sol = [10] * n_node
+    fO = open(FileOut, "r")
+    l_lines = fO.readlines()
+    fO.close()
+    e_linecrit = l_lines[2]
+    LStr = e_linecrit.split(" ")
+    for i in range(1,len(LStr)):
+        eVal = int(LStr[i])
+        if eVal < 0:
+            pos = -eVal - 1
+            x_sol[pos] = 0
+        if eVal > 0:
+            pos = eVal - 1
+            x_sol[pos] = 1
+    return x_sol
 
 
 def GetGraph(n,k):
@@ -124,7 +151,7 @@ def get_pair_cut(the_vector):
 
 def GenerateExample_Best(n, k):
     G = GetGraph(n,k)
-    the_vector = Compute_MaxCut_Gurobi(G)
+    the_vector = Compute_MaxCut_MaxSat(G)
     pair_cut = get_pair_cut(the_vector)
     best_cut = get_objective_value(G, pair_cut)
     return [best_cut, the_vector]
@@ -139,14 +166,15 @@ def GenerateExample_Can(n, k):
 
 
 def CreateFile_Best(n,k):
-    FileSave = "DATA_MaxCut/GUROBI_BestResult_" + str(n) + "_" + str(k)
+    FileSave = "DATA_MaxCut/MAXSAT_BestResult_" + str(n) + "_" + str(k)
+    print("FileSave=", FileSave)
     if not os.path.exists(FileSave):
         [best_cut, the_vector] = GenerateExample_Best(n, k)
         f = open(FileSave, "w")
         f.write("return rec(n:=" + str(n) + ", k:=" + str(k) + ", best_cut:=" + str(best_cut) + ", best_part:=" + str(the_vector) + ");")
         f.close()
     else:
-        print("CreateFile_Best: File already existing at n=" + str(n) + " k=" + strt(k))
+        print("CreateFile_Best: File already existing at n=" + str(n) + " k=" + str(k))
 
 def CreateFile_Can(n,k):
     FileSave = "DATA_MaxCut/CanResult_" + str(n) + "_" + str(k)
@@ -161,7 +189,7 @@ def CreateFile_Can(n,k):
 
 
 
-DebugCanonical = True
+DebugCanonical = False
 if DebugCanonical:
     # For n = 19 k = 6
     # The counter example is b=5
@@ -170,14 +198,15 @@ if DebugCanonical:
 
 
 
-#GenerateCanonicalInfo = False
-GenerateCanonicalInfo = True
+GenerateCanonicalInfo = False
+#GenerateCanonicalInfo = True
 if GenerateCanonicalInfo:
     for n in range(2,400):
         for k in range(1,n+1):
             CreateFile_Can(n,k)
 
-GenerateBestInfo = False
+#GenerateBestInfo = False
+GenerateBestInfo = True
 if GenerateBestInfo:
     for n in range(2,400):
         for k in range(1,n+1):

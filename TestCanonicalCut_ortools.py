@@ -173,7 +173,7 @@ def GenerateExample_Can(n, k):
 
 
 def CreateFile_Best(n,k):
-    FileSave = "DATA_MaxCut/OrtoolsBestResult_" + str(n) + "_" + str(k)
+    FileSave = "DATA_MaxCut/ORTOOL_BestResult_" + str(n) + "_" + str(k)
     if not os.path.exists(FileSave):
         [best_cut, the_vector] = GenerateExample_Best(n, k)
         f = open(FileSave, "w")
