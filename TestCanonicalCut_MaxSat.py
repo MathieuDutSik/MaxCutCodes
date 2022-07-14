@@ -96,6 +96,19 @@ def Compute_MaxCut_MaxSat(G):
     n_edge = len(G.edges)
     n_cond = 2 * n_edge
     #
+    # If it matches then we have to early terminate
+    # because otherwise all the 2^n cases have to be considered
+    #
+    n_node_two = n_node // 2
+    best_possible_cut = n_node_two * (n_node - n_node_two)
+    [b_best, max_val] = get_canonical_best(G)
+    if max_val == best_possible_cut:
+        pair_cut = GetCanonicalCut(n_node, b_best)
+        the_vector = [0] * n_node
+        for ex in pair_cut[0]:
+            the_vector[ex] = 1
+        return the_vector
+    #
     FileInput = "/tmp/evalmaxsat_input"
     fI = open(FileInput, "w")
     fI.write("p wcnf " + str(n_node) + " " + str(n_cond) + " 15\n")
@@ -188,6 +201,14 @@ def CreateFile_Can(n,k):
         print("CreateFile_Can: File already existing at n=" + str(n) + " k=" + str(k))
 
 
+DebugSpeedup = True
+if DebugSpeedup:
+    n = 20
+    k = 11
+    [best_cut, the_vector] = GenerateExample_Best(n, k)
+    print("best_cut=", best_cut)
+    print("the_vector=", the_vector)
+
 
 DebugCanonical = False
 if DebugCanonical:
@@ -205,8 +226,8 @@ if GenerateCanonicalInfo:
         for k in range(1,n+1):
             CreateFile_Can(n,k)
 
-#GenerateBestInfo = False
-GenerateBestInfo = True
+GenerateBestInfo = False
+#GenerateBestInfo = True
 if GenerateBestInfo:
     for n in range(2,400):
         for k in range(1,n+1):
