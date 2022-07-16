@@ -77,21 +77,14 @@ def GenerateExample(n, k):
     if the_cut == can_cut:
         return [n_edge, the_cut, can_cut]
     else:
-#        print("the_cut=", the_cut, " can_cut=", can_cut)
         edge_cut = G.max_cut(False, vertices=True)
-#        print("edge_cut=", edge_cut)
         pair_cut = edge_cut[2]
-#        print("pair_cut=", pair_cut)
         obj_val = get_objective_value(G, pair_cut)
-#        print("obj_val=", obj_val)
-        import pdb
-        pdb.set_trace()
-
         return [n_edge, the_cut, can_cut, pair_cut]
 
 
-DoDebug = True
-#DoDebug = False
+#DoDebug = True
+DoDebug = False
 if DoDebug:
    the_gen = GenerateExample(16,8)
 
@@ -108,13 +101,13 @@ if SearchCounterExample:
                 sys.exit(1)
             print("n=", n, " k=", k, " the_info=", the_info)
 
-#GenerateData = True
-GenerateData = False
+GenerateData = True
+#GenerateData = False
 if GenerateData:
     for n in range(2,30):
         for k in range(n+1):
             print("------------- n =", n, " k=", k, " ---------------")
-            FileSave="DATA_MaxCut/Result_" + str(n) + "_" + str(k)
+            FileSave="DATA_MaxCut/SAGE_Result_" + str(n) + "_" + str(k)
             if not os.path.exists(FileSave):
                 print("Creating data")
                 the_info = GenerateExample(n,k)

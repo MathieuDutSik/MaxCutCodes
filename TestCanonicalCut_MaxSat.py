@@ -201,14 +201,6 @@ def CreateFile_Can(n,k):
         print("CreateFile_Can: File already existing at n=" + str(n) + " k=" + str(k))
 
 
-DebugSpeedup = True
-if DebugSpeedup:
-    n = 20
-    k = 11
-    [best_cut, the_vector] = GenerateExample_Best(n, k)
-    print("best_cut=", best_cut)
-    print("the_vector=", the_vector)
-
 
 DebugCanonical = False
 if DebugCanonical:
@@ -226,8 +218,8 @@ if GenerateCanonicalInfo:
         for k in range(1,n+1):
             CreateFile_Can(n,k)
 
-GenerateBestInfo = False
-#GenerateBestInfo = True
+#GenerateBestInfo = False
+GenerateBestInfo = True
 if GenerateBestInfo:
     for n in range(2,400):
         for k in range(1,n+1):
